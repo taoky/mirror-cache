@@ -55,7 +55,7 @@ pub fn set_lru_cache_entry(
 ) -> Result<()> {
     let kv_array = entry.to_redis_multiple_fields();
     let tx_result = redis::transaction(con, &[key, total_size_key, zlist_key], |con, pipe| {
-        let pkg_size: Option<u64> = con.hget(&key, "size").unwrap();
+        let pkg_size: Option<u64> = con.hget(key, "size").unwrap();
         pipe.decr(
             total_size_key,
             if let Some(old_size) = pkg_size {

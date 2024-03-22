@@ -307,6 +307,7 @@ impl RedisMetadataDb {
         }
     }
 
+    #[allow(clippy::wrong_self_convention)]
     pub fn from_prefixed_key(&self, cache_key: &str) -> String {
         let cache_key = &cache_key[self.id.len() + 1..];
         cache_key.to_string()

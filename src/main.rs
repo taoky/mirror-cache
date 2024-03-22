@@ -153,7 +153,7 @@ fn file_watch_handler(config_filename: &str, result: std::result::Result<Event, 
 
 fn create_re_set_list(rules: &[Rule]) -> (RegexSet, Vec<Regex>) {
     let rules_strings: Vec<String> = rules.iter().map(|rule| rule.path.clone()).collect();
-    let set = RegexSet::new(&rules_strings).unwrap();
+    let set = RegexSet::new(rules_strings).unwrap();
     let list = rules
         .iter()
         .map(|rule| Regex::new(&rule.path).unwrap())
