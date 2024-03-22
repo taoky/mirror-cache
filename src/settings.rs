@@ -88,7 +88,6 @@ pub struct Storage {
 pub enum StorageConfig {
     Fs { path: String },
     Mem,
-    S3 { endpoint: String, bucket: String },
 }
 
 impl Settings {

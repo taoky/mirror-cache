@@ -1,10 +1,8 @@
-use crate::cache::{CacheData, CacheSizeType};
+use crate::cache::CacheData;
 use crate::error::{Error, Result};
 
 use bytes::Bytes;
 use futures::{Stream, StreamExt, TryStreamExt};
-use rusoto_core::{Region, RusotoError};
-use rusoto_s3::{S3Client, S3};
 use std::collections::HashMap;
 use std::fs;
 use std::io::prelude::*;
@@ -23,10 +21,6 @@ pub enum Storage {
     },
     Memory {
         map: Arc<RwLock<HashMap<String, Vec<u8>>>>,
-    },
-    S3 {
-        endpoint: String,
-        bucket: String,
     },
 }
 
@@ -54,21 +48,6 @@ impl Storage {
                 ))),
                 |x| Ok(x.clone().into()),
             ),
-            Storage::S3 { endpoint, bucket } => {
-                let client = new_s3_client(endpoint);
-                let output = client
-                    .get_object(rusoto_s3::GetObjectRequest {
-                        bucket: bucket.clone(),
-                        key: name.to_string(),
-                        ..Default::default()
-                    })
-                    .await?;
-                let rusoto_stream = output.body.unwrap();
-                Ok(CacheData::ByteStream(
-                    Box::new(rusoto_stream.map_err(Error::IoError)),
-                    output.content_length.map(|x| x as CacheSizeType),
-                ))
-            }
         }
     }
 
@@ -79,57 +58,6 @@ impl Storage {
                 map.write()
                     .await
                     .insert(name.to_string(), data.into_vec_u8().await);
-            }
-            Storage::S3 {
-                endpoint, bucket, ..
-            } => {
-                let client = new_s3_client(endpoint);
-                let len = data.len();
-                match client
-                    .head_bucket(rusoto_s3::HeadBucketRequest {
-                        bucket: bucket.clone(),
-                        ..Default::default()
-                    })
-                    .await
-                {
-                    Ok(_) => {}
-                    Err(e) => match e {
-                        RusotoError::Unknown(resp) => {
-                            if resp.status.as_u16() == 404 {
-                                client
-                                    .create_bucket(rusoto_s3::CreateBucketRequest {
-                                        bucket: bucket.clone(),
-                                        ..Default::default()
-                                    })
-                                    .await
-                                    .unwrap();
-                                debug!("created bucket {}", bucket)
-                            }
-                        }
-                        _ => {
-                            error!("{:?}", e);
-                        }
-                    },
-                };
-
-                match client
-                    .put_object(rusoto_s3::PutObjectRequest {
-                        bucket: bucket.clone(),
-                        key: name.to_string(),
-                        content_length: Some(len as i64),
-                        body: Some(rusoto_s3::StreamingBody::new(
-                            data.into_byte_stream()
-                                .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e)),
-                        )),
-                        ..Default::default()
-                    })
-                    .await
-                {
-                    Ok(_) => {}
-                    Err(e) => {
-                        error!("Failed to persist object in S3: {:?}", e)
-                    }
-                }
             }
         }
     }
@@ -145,31 +73,11 @@ impl Storage {
                 map.write().await.remove(name);
                 Ok(())
             }
-            Storage::S3 {
-                endpoint, bucket, ..
-            } => {
-                let client = new_s3_client(endpoint);
-                client
-                    .delete_object(rusoto_s3::DeleteObjectRequest {
-                        bucket: bucket.clone(),
-                        key: name.to_string(),
-                        ..Default::default()
-                    })
-                    .await?;
-                Ok(())
-            }
         }
     }
     pub fn new_mem() -> Self {
         Storage::Memory {
             map: Arc::new(RwLock::new(HashMap::new())),
-        }
-    }
-
-    pub fn new_s3(endpoint: &str, bucket: &str) -> Self {
-        Storage::S3 {
-            endpoint: endpoint.to_string(),
-            bucket: bucket.to_string(),
         }
     }
 }
@@ -197,13 +105,6 @@ pub async fn get_file_stream(path: &Path) -> Result<impl Stream<Item = Result<By
         .map_ok(|bytes| bytes.freeze())
         .map_err(|e| e.into());
     Ok(stream)
-}
-
-fn new_s3_client(endpoint: &str) -> S3Client {
-    S3Client::new(Region::Custom {
-        name: "s3 name".to_string(),
-        endpoint: endpoint.to_string(),
-    })
 }
 
 #[cfg(test)]

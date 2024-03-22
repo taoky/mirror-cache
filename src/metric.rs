@@ -15,34 +15,34 @@ pub static HG_TASKS_LEN: &str = "current_download_tasks";
 pub static HG_CACHE_SIZE_PREFIX: &str = "cache_size";
 pub static CNT_RM_FILES: &str = "files_removed";
 
-pub fn register_counters() {
-    register_counter!(
+pub fn describe_counters() {
+    describe_counter!(
         COUNTER_TASKS_BG,
         "The number of background download tasks spawned."
     );
-    register_counter!(
+    describe_counter!(
         CNT_TASKS_BG_SUCCESS,
         "The number of successful background download tasks."
     );
-    register_counter!(
+    describe_counter!(
         CNT_TASKS_BG_FAILURE,
         "The number of failed background download tasks."
     );
-    register_counter!(CNT_OUT_REQUESTS, "The number of outbound requests.");
-    register_counter!(
+    describe_counter!(CNT_OUT_REQUESTS, "The number of outbound requests.");
+    describe_counter!(
         CNT_OUT_REQUESTS_SUCCESS,
         "The number of successful outbound requests."
     );
-    register_counter!(
+    describe_counter!(
         CNT_OUT_REQUESTS_FAILURE,
         "The number of failed outbound requests."
     );
-    register_histogram!(
+    describe_histogram!(
         HG_TASKS_LEN,
         metrics::Unit::Count,
-        "The current size of background download task set.",
+        "The current size of background download task set."
     );
-    register_counter!(CNT_RM_FILES, "The number of removed files.");
+    describe_counter!(CNT_RM_FILES, "The number of removed files.");
 }
 
 pub fn get_cache_size_metrics_key(id: &str) -> String {

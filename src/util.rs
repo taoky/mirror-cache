@@ -11,7 +11,7 @@ pub fn now() -> i64 {
 }
 
 pub fn now_nanos() -> i64 {
-    chrono::offset::Local::now().timestamp_nanos()
+    chrono::offset::Local::now().timestamp_nanos_opt().unwrap()
 }
 
 pub async fn make_request(url: &str, head: bool) -> Result<reqwest::Response> {

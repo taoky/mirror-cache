@@ -8,11 +8,11 @@ mod task;
 mod util;
 
 use cache::CacheHitMiss;
-use clap::{crate_version, App, Arg};
-use metrics::{increment_counter, register_counter};
+use clap::{crate_version, Arg, ArgAction, Command};
+use metrics::{describe_counter, increment_counter, register_counter};
 use metrics_exporter_prometheus::PrometheusBuilder;
 use metrics_util::MetricKindMask;
-use notify::{Event, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Event, RecursiveMode, Watcher};
 use regex::{Regex, RegexSet};
 use settings::{rule_label, Rule};
 use std::path::Path;
@@ -46,22 +46,22 @@ lazy_static::lazy_static! {
 
 #[tokio::main]
 async fn main() {
-    let matches = App::new("mirror-cache")
+    let matches = Command::new("mirror-cache")
         .version(crate_version!())
         .arg(
-            Arg::with_name("config")
-                .short("c")
+            Arg::new("config")
+                .short('c')
                 .long("config")
                 .value_name("FILE")
                 .help("Sets a custom config file. Default config.yml")
-                .takes_value(true),
+                .action(ArgAction::Set),
         )
         .get_matches();
     debug!("CLI args: {:?}", matches);
-    let config_filename = matches
-        .value_of("config")
-        .unwrap_or("config.yml")
-        .to_string();
+    let config_filename = match matches.get_one::<String>("config") {
+        Some(filename) => filename.clone(),
+        None => "config.yml".to_string(),
+    };
 
     let app_settings = settings::Settings::new(&config_filename).unwrap();
     let port = app_settings.port;
@@ -96,16 +96,16 @@ async fn main() {
             MetricKindMask::COUNTER | MetricKindMask::HISTOGRAM,
             Some(std::time::Duration::from_secs(10)),
         )
-        .listen_address(([127, 0, 0, 1], metrics_port))
+        .with_http_listener(([127, 0, 0, 1], metrics_port))
         .install()
         .expect("failed to install Prometheus recorder");
-    metric::register_counters();
+    metric::describe_counters();
     register_rules_metrics(&app_settings.rules);
 
     let config_filename_clone = config_filename.clone();
     // make watcher live long enough
     let mut watcher =
-        RecommendedWatcher::new(move |result: std::result::Result<Event, notify::Error>| {
+        notify::recommended_watcher(move |result: std::result::Result<Event, notify::Error>| {
             file_watch_handler(&config_filename_clone, result)
         })
         .unwrap();
@@ -169,11 +169,22 @@ fn create_re_set_list(rules: &[Rule]) -> (RegexSet, Vec<Regex>) {
 /// - counter - failed requests
 fn register_rules_metrics(rules: &[Rule]) {
     for rule in rules {
-        register_counter!(metric::COUNTER_CACHE_HIT, "Cache hit count", "rule" => rule_label(rule));
-        register_counter!(metric::COUNTER_CACHE_MISS, "Cache miss count", "rule" => rule_label(rule));
-        register_counter!(metric::COUNTER_REQ, "Incoming requests count", "rule" => rule_label(rule));
-        register_counter!(metric::COUNTER_REQ_SUCCESS, "Incoming requests count (success)", "rule" => rule_label(rule));
-        register_counter!(metric::COUNTER_REQ_FAILURE, "Incoming requests count (failure)", "rule" => rule_label(rule));
+        register_counter!(metric::COUNTER_CACHE_HIT, "rule" => rule_label(rule));
+        describe_counter!(metric::COUNTER_CACHE_HIT, "Cache hit count");
+        register_counter!(metric::COUNTER_CACHE_MISS, "rule" => rule_label(rule));
+        describe_counter!(metric::COUNTER_CACHE_MISS, "Cache miss count");
+        register_counter!(metric::COUNTER_REQ, "rule" => rule_label(rule));
+        describe_counter!(metric::COUNTER_REQ, "Incoming request count");
+        register_counter!(metric::COUNTER_REQ_SUCCESS, "rule" => rule_label(rule));
+        describe_counter!(
+            metric::COUNTER_REQ_SUCCESS,
+            "Incoming requests count (success)"
+        );
+        register_counter!(metric::COUNTER_REQ_FAILURE, "rule" => rule_label(rule));
+        describe_counter!(
+            metric::COUNTER_REQ_FAILURE,
+            "Incoming requests count (failure)"
+        );
     }
 }
 

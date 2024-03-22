@@ -73,11 +73,6 @@ For other policy-specific options, see [Cache Policies](#cache-policies) for det
   - `MEM`: temporary in-mem storage (`config: Mem`)
   - `FS`: local filesystem. (`config: Fs`)
     - `path`: the path of cached data
-  - `S3`: S3 (Simple Storage Service) storage (`config: S3`)
-    - `endpoint`: the endpoint of S3
-    - `bucket`: the bucket name
-    
-    For S3 authentication, just export the environment variables `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (We use the default `rusoto_s3` authentication, please checkout its documents).
 - `config`: the configuration of storage. The config starts with a config key (unique for each `type`), its value is a map of avaliable options for that `type`. See above for config key and avaliable options.
 
 ### Hot reloading

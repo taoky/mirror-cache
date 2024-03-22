@@ -178,7 +178,7 @@ impl TaskManager {
         let redis_url = app_settings.get_redis_url();
         let policies = app_settings.policies.clone();
 
-        let mut tm = self;
+        let tm = self;
         tm.config = app_settings.clone();
 
         let mut policy_map: HashSet<String> = HashSet::new(); // used to avoid create duplicated cache if some rules share the same policy
@@ -235,9 +235,6 @@ impl TaskManager {
                 root_dir: path.clone(),
             },
             crate::settings::StorageConfig::Mem => Storage::new_mem(),
-            crate::settings::StorageConfig::S3 {
-                endpoint, bucket, ..
-            } => Storage::new_s3(endpoint, bucket),
         }
     }
 

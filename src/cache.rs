@@ -9,7 +9,7 @@ use crate::util;
 use async_trait::async_trait;
 use bytes::Bytes;
 use futures::{future, stream, Stream, StreamExt};
-use metrics::{histogram, increment_counter, register_histogram};
+use metrics::{describe_histogram, histogram, increment_counter};
 use redis::Commands;
 use sled::transaction::{TransactionError, TransactionResult};
 use sled::Transactional;
@@ -181,9 +181,10 @@ impl LruCache {
         storage: Arc<Storage>,
         metric_id: &str,
     ) -> Self {
-        register_histogram!(
+        describe_histogram!(
             metric::get_cache_size_metrics_key(metric_id),
             metrics::Unit::Bytes,
+            "The size of cache in bytes."
         );
         Self {
             size_limit,

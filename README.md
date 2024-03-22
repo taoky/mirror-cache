@@ -29,7 +29,7 @@ A reverse proxy supporting multiple cache policies, customized rules, configurat
 - Reload updated config without restarting the program
 - Support customized rules
 - Expose metrics like cache hit rate per rule, task count and more
-- Support multiple storage backend (memory, local filesystem and S3)
+- Support multiple storage backend (memory, local filesystem)
 
 ## Quick start
 

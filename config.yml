@@ -56,6 +56,12 @@ rules:
   - path: "ubuntu/indices/(.*)"
     upstream: "http://archive.ubuntu.com/ubuntu/indices/$1"
     policy: "policy_ubuntu"
+  - path: "ubuntu/dists/(.*)"
+    upstream: "http://archive.ubuntu.com/ubuntu/dists/$1"
+    policy: "policy_ubuntu"
+  - path: "ubuntu/pool/(.*)"
+    upstream: "http://archive.ubuntu.com/ubuntu/pool/$1"
+    policy: "policy_ubuntu"
 
   # GitHub-Releases
   - name: GitHub Home
@@ -90,9 +96,3 @@ storages:
   - name: in-mem
     type: MEM
     config: Mem
-  - name: S3
-    type: S3
-    config:
-      S3:
-        endpoint: "http://localhost:9123"
-        bucket: "cache"
