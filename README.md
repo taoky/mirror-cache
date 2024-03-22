@@ -3,7 +3,7 @@
 <div align="center">
     <img src="https://img.shields.io/github/license/SeanChao/mirror-cache?color=blue&style=flat-square" alt="license"/>
   <a href="https://github.com/SeanChao/mirror-cache/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/workflow/status/seanchao/mirror-cache/Test?label=Test&logo=github&style=flat-square" alt="GitHub Actions CI testing status"/>
+    <img src="https://img.shields.io/github/actions/workflow/status/seanchao/mirror-cache/ci.yml?branch=main&label=Test&logo=github&style=flat-square" alt="GitHub Actions CI testing status"/>
   </a>
   <a href="https://github.com/SeanChao/mirror-cache/releases/latest">
     <img src="https://img.shields.io/github/v/release/seanchao/mirror-cache?sort=semver&style=flat-square" alt="GitHub releases latest version"/>
